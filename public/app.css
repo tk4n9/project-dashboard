@@ -48,12 +48,14 @@ a { color: var(--accent); }
   border-radius: 6px; padding: 4px 8px;
 }
 .project-name:hover, .project-name:focus { border-color: var(--border); outline: none; }
-.config summary { cursor: pointer; font-size: 20px; list-style: none; padding: 4px 8px; }
-.config-panel {
-  position: absolute; right: 16px; margin-top: 6px; background: var(--card);
-  border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: grid; gap: 8px;
+.settings { display: flex; align-items: center; gap: 6px; }
+.icon-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0; border-radius: 8px;
+  background: var(--bg); color: var(--muted); border: 1px solid var(--border); cursor: pointer;
 }
-.config-panel label { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.icon-toggle:hover { color: var(--fg); border-color: var(--accent); }
+.icon-toggle.active { color: var(--accent); border-color: var(--accent); }
 
 /* Toolbar */
 .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
@@ -71,15 +73,24 @@ button.danger { color: var(--danger); border-color: var(--danger); }
 /* Todo list */
 .todo-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .todo {
-  border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow: hidden;
 }
 .todo-main { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
 .todo .title { flex: 1; font-weight: 500; text-decoration: none; color: var(--fg); }
 .todo.done .title { text-decoration: line-through; color: var(--muted); }
-.todo .select, .todo .toggle { width: 16px; height: 16px; cursor: pointer; }
-.expand { margin-left: auto; }
-.expand summary { cursor: pointer; list-style: none; color: var(--muted); padding: 2px 6px; }
-.sessions { margin: 6px 0 10px 40px; padding: 0; list-style: none; display: grid; gap: 4px; }
+.todo .toggle { width: 16px; height: 16px; cursor: pointer; flex: 0 0 auto; }
+.expand-btn {
+  margin-left: auto; flex: 0 0 auto; cursor: pointer; color: var(--muted);
+  background: transparent; border: none; font-size: 14px; padding: 4px 8px; line-height: 1;
+  transition: transform 0.15s ease;
+}
+.expand-btn:hover { color: var(--fg); }
+.expand-btn.open { transform: rotate(180deg); }
+.todo-sessions { padding: 0 12px 12px; }
+.sessions-box {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 10px 12px;
+}
+.sessions { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .muted, .empty { color: var(--muted); }
 
 /* Badges */
@@ -94,6 +105,12 @@ button.danger { color: var(--danger); border-color: var(--danger); }
   padding: 16px; margin: 16px 0;
 }
 .card h2 { margin-top: 0; font-size: 16px; }
+.detail-title {
+  width: 100%; font-size: 26px; font-weight: 700; margin: 0 0 8px;
+  border: 1px solid transparent; background: transparent; color: var(--fg);
+  border-radius: 6px; padding: 4px 8px;
+}
+.detail-title:hover, .detail-title:focus { border-color: var(--border); outline: none; }
 .explanation, .start-form textarea { width: 100%; resize: vertical; font-family: ui-monospace, monospace; }
 .row { display: flex; gap: 16px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
 .md-tabs { display: flex; gap: 4px; margin-bottom: 8px; }

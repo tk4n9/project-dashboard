@@ -19,20 +19,22 @@ if (projectName) {
     postJSON('/config', { project_name: projectName.value }));
 }
 
-const showCompleted = $('#show-completed');
-if (showCompleted) {
-  showCompleted.addEventListener('change', async () => {
-    await postJSON('/config', { show_completed: showCompleted.checked });
+const toggleCompleted = $('#toggle-completed');
+if (toggleCompleted) {
+  toggleCompleted.addEventListener('click', async () => {
+    const next = toggleCompleted.getAttribute('aria-pressed') !== 'true';
+    await postJSON('/config', { show_completed: next });
     location.reload();
   });
 }
 
-const darkMode = $('#dark-mode');
-if (darkMode) {
-  darkMode.addEventListener('change', async () => {
-    const theme = darkMode.checked ? 'dark' : 'light';
-    document.documentElement.dataset.theme = theme;
-    await postJSON('/config', { theme });
+const toggleTheme = $('#toggle-theme');
+if (toggleTheme) {
+  toggleTheme.addEventListener('click', async () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    await postJSON('/config', { theme: next });
+    location.reload(); // refresh the icon (sun/moon) and title
   });
 }
 
@@ -47,16 +49,16 @@ if (addForm) {
   });
 }
 
-const deleteSelected = $('#delete-selected');
-if (deleteSelected) {
-  deleteSelected.addEventListener('click', async () => {
-    const ids = $$('.todo .select:checked').map((c) => Number(c.value));
-    if (!ids.length) { alert('No todos selected.'); return; }
-    if (!confirm(`Delete ${ids.length} todo(s)? This also kills their Claude sessions.`)) return;
-    await postJSON('/todos/delete', { ids });
-    location.reload();
+// Expand/collapse a todo's sessions box without resizing the top row.
+$$('.todo .expand-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const panel = btn.closest('.todo').querySelector('.todo-sessions');
+    const opening = panel.hidden;
+    panel.hidden = !opening;
+    btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    btn.classList.toggle('open', opening);
   });
-}
+});
 
 $$('.todo .toggle').forEach((cb) => {
   cb.addEventListener('change', async () => {
@@ -71,6 +73,15 @@ const explanation = $('#explanation');
 const saveExpl = $('#save-explanation');
 if (saveExpl && explanation) {
   const todoId = location.pathname.split('/')[2];
+
+  const titleInput = $('#todo-title');
+  if (titleInput) {
+    titleInput.addEventListener('change', () => {
+      const v = titleInput.value.trim();
+      if (v) postJSON(`/todos/${todoId}/title`, { title: v });
+    });
+  }
+
   saveExpl.addEventListener('click', async () => {
     await postJSON(`/todos/${todoId}/explanation`, { explanation: explanation.value });
     saveExpl.textContent = 'Saved ✓';

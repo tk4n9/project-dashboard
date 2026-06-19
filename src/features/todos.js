@@ -9,6 +9,14 @@ import { startSession, killSession, tmuxAvailable } from '../sessions.js';
 const MODELS = ['opus', 'sonnet', 'haiku', 'fable'];
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
+// Inline SVG icons (stroke = currentColor so they follow the theme).
+const ICON = {
+  eye: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+};
+
 // ---------- DB helpers ----------
 const allTodos = (db) => db.prepare('SELECT * FROM todos ORDER BY position, id').all();
 const getTodo = (db, id) => db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
@@ -36,14 +44,15 @@ function todoRow(t, sessions) {
   return `
   <li class="todo ${t.done ? 'done' : ''}" data-id="${t.id}">
     <div class="todo-main">
-      <input type="checkbox" class="select" value="${t.id}" aria-label="Select todo">
       <input type="checkbox" class="toggle" ${t.done ? 'checked' : ''} aria-label="Mark done">
       <a class="title" href="/todos/${t.id}">${esc(t.title)}</a>
       ${dueBadge(t.due_date)}
-      <details class="expand">
-        <summary aria-label="Show sessions">▾</summary>
+      <button type="button" class="expand-btn" aria-expanded="false" aria-label="Show sessions">▾</button>
+    </div>
+    <div class="todo-sessions" hidden>
+      <div class="sessions-box">
         <ul class="sessions">${links}</ul>
-      </details>
+      </div>
     </div>
   </li>`;
 }
@@ -54,20 +63,19 @@ function mainView(settings, todos, sessionsByTodo) {
   return `
     <header class="topbar">
       <input id="project-name" class="project-name" value="${esc(settings.project_name)}" aria-label="Project name">
-      <details class="config">
-        <summary>⚙</summary>
-        <div class="config-panel">
-          <label><input type="checkbox" id="show-completed" ${settings.show_completed ? 'checked' : ''}> Show completed</label>
-          <label><input type="checkbox" id="dark-mode" ${settings.theme === 'dark' ? 'checked' : ''}> Dark mode</label>
-        </div>
-      </details>
+      <div class="settings">
+        <button id="toggle-completed" class="icon-toggle ${settings.show_completed ? 'active' : ''}"
+                aria-pressed="${settings.show_completed ? 'true' : 'false'}"
+                title="toggle completed todo block visibility">${settings.show_completed ? ICON.eye : ICON.eyeOff}</button>
+        <button id="toggle-theme" class="icon-toggle"
+                title="toggle dark mode">${settings.theme === 'dark' ? ICON.moon : ICON.sun}</button>
+      </div>
     </header>
     <div class="toolbar">
       <form id="add-form" class="add-form">
         <input type="text" id="add-title" placeholder="New todo title…" required>
         <button type="submit">+ Add</button>
       </form>
-      <button id="delete-selected" class="danger">Delete selected</button>
     </div>
     <ul class="todo-list">${rows || '<li class="muted empty">No todos. Add one above.</li>'}</ul>`;
 }
@@ -76,7 +84,8 @@ function detailView(todo, sessions, targetDir) {
   const links = sessions.length ? sessions.map(sessionItem).join('') : '<li class="muted">No sessions yet.</li>';
   return `
     <p><a href="/" class="back">← Back</a></p>
-    <h1>${esc(todo.title)}</h1>
+    <input id="todo-title" class="detail-title" value="${esc(todo.title)}" aria-label="Todo title">
+
     <section class="card">
       <div class="md-tabs">
         <button type="button" class="tab active" data-tab="write">Write</button>
@@ -168,6 +177,14 @@ function toggleTodo(ctx) {
   ctx.json(200, { ok: true, done: t ? t.done : null });
 }
 
+async function saveTitle(ctx) {
+  const b = await ctx.body();
+  const title = (b.title || '').trim();
+  if (!title) return ctx.json(400, { error: 'title required' });
+  ctx.db.prepare('UPDATE todos SET title = ? WHERE id = ?').run(title, Number(ctx.params.id));
+  ctx.json(200, { ok: true });
+}
+
 async function saveExplanation(ctx) {
   const b = await ctx.body();
   ctx.db.prepare('UPDATE todos SET explanation = ? WHERE id = ?').run(b.explanation || '', Number(ctx.params.id));
@@ -218,6 +235,7 @@ export default {
     { method: 'POST', path: '/todos', handler: addTodo },
     { method: 'POST', path: '/todos/delete', handler: deleteTodos },
     { method: 'POST', path: '/todos/:id/toggle', handler: toggleTodo },
+    { method: 'POST', path: '/todos/:id/title', handler: saveTitle },
     { method: 'POST', path: '/todos/:id/explanation', handler: saveExplanation },
     { method: 'POST', path: '/todos/:id/due', handler: saveDue },
     { method: 'POST', path: '/todos/:id/sessions', handler: startTodoSession },

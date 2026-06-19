@@ -61,6 +61,15 @@ test('add, toggle, and read back a todo', async () => {
   assert.equal(toggled.done, 1);
 });
 
+test('todo title is editable', async () => {
+  const { id } = await (await post('/todos', { title: 'Old title' })).json();
+  const res = await post(`/todos/${id}/title`, { title: 'New title' });
+  assert.equal(res.status, 200);
+  assert.match(await (await fetch(`${base}/todos/${id}`)).text(), /New title/);
+  // empty title rejected
+  assert.equal((await post(`/todos/${id}/title`, { title: '  ' })).status, 400);
+});
+
 test('add requires a title', async () => {
   const res = await post('/todos', { title: '   ' });
   assert.equal(res.status, 400);
