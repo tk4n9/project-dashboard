@@ -1,0 +1,97 @@
+// Smoke tests: boot the real server against an isolated temp DB/config and
+// exercise the HTTP surface. Zero dependencies (node:test + global fetch).
+// Run: npm test
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+// Isolate state BEFORE importing the app (config.js/db.js read these at import).
+const dir = mkdtempSync(join(tmpdir(), 'pd-test-'));
+process.env.PD_DB_PATH = join(dir, 'test.db');
+process.env.PD_CONFIG_PATH = join(dir, 'config.json');
+process.env.PD_DISABLE_SPAWN = '1'; // never launch a real `claude`
+writeFileSync(process.env.PD_CONFIG_PATH, JSON.stringify({
+  target_dir: dir, host: '127.0.0.1', port: 0, password: '', secret: 'test-secret',
+}));
+
+const { createServer } = await import('../src/server.js');
+
+let server;
+let base;
+const post = (path, body) =>
+  fetch(base + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+before(async () => {
+  server = await createServer();
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  base = `http://127.0.0.1:${server.address().port}`;
+});
+after(() => server.close());
+
+test('home page renders with nav', async () => {
+  const res = await fetch(base + '/');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /todo-list/);
+  assert.match(html, /class="appnav"/);
+  assert.match(html, />Todos</);
+});
+
+test('unknown route is 404', async () => {
+  const res = await fetch(base + '/does-not-exist');
+  assert.equal(res.status, 404);
+});
+
+test('add, toggle, and read back a todo', async () => {
+  const add = await (await post('/todos', { title: 'Write tests' })).json();
+  assert.equal(add.ok, true);
+  const id = add.id;
+
+  const detail = await fetch(`${base}/todos/${id}`);
+  assert.equal(detail.status, 200);
+  assert.match(await detail.text(), /Write tests/);
+
+  const toggled = await (await post(`/todos/${id}/toggle`, {})).json();
+  assert.equal(toggled.done, 1);
+});
+
+test('add requires a title', async () => {
+  const res = await post('/todos', { title: '   ' });
+  assert.equal(res.status, 400);
+});
+
+test('due date is validated', async () => {
+  const { id } = await (await post('/todos', { title: 'Due item' })).json();
+  assert.equal((await post(`/todos/${id}/due`, { due_date: 'nonsense' })).status, 200);
+  const html = await (await fetch(`${base}/todos/${id}`)).text();
+  assert.doesNotMatch(html, /nonsense/); // invalid date rejected → stored as null
+});
+
+test('config update is reflected on the page', async () => {
+  await post('/config', { project_name: 'Renamed Project', theme: 'dark' });
+  const html = await (await fetch(base + '/')).text();
+  assert.match(html, /Renamed Project/);
+  assert.match(html, /data-theme="dark"/);
+});
+
+test('delete removes todos', async () => {
+  const { id } = await (await post('/todos', { title: 'Delete me' })).json();
+  const del = await (await post('/todos/delete', { ids: [id] })).json();
+  assert.equal(del.deleted, 1);
+  assert.equal((await fetch(`${base}/todos/${id}`)).status, 404);
+});
+
+test('session endpoint records a session (spawn disabled)', async () => {
+  const { id } = await (await post('/todos', { title: 'Session host' })).json();
+  const res = await post(`/todos/${id}/sessions`, { name: 's1', model: 'sonnet', effort: 'high', prompt: 'hi' });
+  assert.equal(res.status, 200);
+  const out = await res.json();
+  assert.equal(out.ok, true);
+  assert.equal(out.status, 'starting');
+});

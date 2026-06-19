@@ -1,0 +1,34 @@
+// Per-request context handed to every feature handler. This is the feature API
+// surface — keep it small and stable so feature modules rarely need core changes.
+import { layout } from './layout.js';
+import { parseBody, send, json, redirect } from './http.js';
+
+export function makeContext({ req, res, url, params, db, runtime, navItems }) {
+  let bodyPromise;
+  const getSettings = () => db.prepare('SELECT * FROM config WHERE id = 1').get();
+
+  return {
+    req, res, url, params, db,
+    runtime,                      // config.json values (target_dir, port, ...)
+    method: req.method,
+    path: url.pathname,
+    query: url.searchParams,
+    navItems,
+
+    body: () => (bodyPromise ??= parseBody(req)),   // memoized; await it
+    settings: getSettings,        // db config row (project_name, theme, show_completed)
+
+    send: (status, body, headers) => send(res, status, body, headers),
+    json: (status, obj, headers) => json(res, status, obj, headers),
+    redirect: (location, headers) => redirect(res, location, headers),
+    notFound: (msg = 'Not found') => send(res, 404, msg),
+
+    // Render a full HTML page with shared chrome (nav + theme).
+    page: ({ title, body, bare = false }) => {
+      const s = getSettings();
+      send(res, 200, layout({
+        title, body, theme: s.theme, navItems, activePath: url.pathname, bare,
+      }));
+    },
+  };
+}

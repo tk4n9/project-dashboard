@@ -48,3 +48,7 @@ pnpm-debug.log*
 tmp/
 .cache/
 .turbo/
+
+# Project Dashboard runtime (local, machine-specific)
+config.json
+data/
