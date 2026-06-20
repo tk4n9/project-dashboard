@@ -21,7 +21,8 @@ export function initSchema() {
       id            INTEGER PRIMARY KEY CHECK (id = 1),
       project_name  TEXT    NOT NULL DEFAULT 'My Project',
       show_completed INTEGER NOT NULL DEFAULT 1,
-      theme         TEXT    NOT NULL DEFAULT 'light'
+      theme         TEXT    NOT NULL DEFAULT 'light',
+      container_align TEXT  NOT NULL DEFAULT 'center'
     );
 
     CREATE TABLE IF NOT EXISTS todos (
@@ -50,6 +51,12 @@ export function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_sessions_todo ON sessions(todo_id);
   `);
+
+  // Migration: add columns introduced after the initial schema (existing DBs).
+  const configCols = db.prepare('PRAGMA table_info(config)').all().map((c) => c.name);
+  if (!configCols.includes('container_align')) {
+    db.exec("ALTER TABLE config ADD COLUMN container_align TEXT NOT NULL DEFAULT 'center'");
+  }
 
   // Ensure the single config row exists.
   db.prepare(`INSERT OR IGNORE INTO config (id) VALUES (1)`).run();

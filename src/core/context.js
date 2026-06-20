@@ -27,7 +27,7 @@ export function makeContext({ req, res, url, params, db, runtime, navItems }) {
     page: ({ title, body, bare = false }) => {
       const s = getSettings();
       send(res, 200, layout({
-        title, body, theme: s.theme, navItems, activePath: url.pathname, bare,
+        title, body, theme: s.theme, align: s.container_align, navItems, activePath: url.pathname, bare,
       }));
     },
   };

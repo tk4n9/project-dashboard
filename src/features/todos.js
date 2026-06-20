@@ -4,18 +4,11 @@
 // This is the reference example for how a feature is built: views are plain
 // functions returning HTML strings; handlers read ctx and call ctx.page/ctx.json.
 import { esc } from '../core/layout.js';
+import { ICON } from '../core/icons.js';
 import { startSession, killSession, tmuxAvailable } from '../sessions.js';
 
 const MODELS = ['opus', 'sonnet', 'haiku', 'fable'];
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
-
-// Inline SVG icons (stroke = currentColor so they follow the theme).
-const ICON = {
-  eye: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
-  eyeOff: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
-  sun: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
-  moon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
-};
 
 // ---------- DB helpers ----------
 const allTodos = (db) => db.prepare('SELECT * FROM todos ORDER BY position, id').all();
@@ -67,8 +60,6 @@ function mainView(settings, todos, sessionsByTodo) {
         <button id="toggle-completed" class="icon-toggle ${settings.show_completed ? 'active' : ''}"
                 aria-pressed="${settings.show_completed ? 'true' : 'false'}"
                 title="toggle completed todo block visibility">${settings.show_completed ? ICON.eye : ICON.eyeOff}</button>
-        <button id="toggle-theme" class="icon-toggle"
-                title="toggle dark mode">${settings.theme === 'dark' ? ICON.moon : ICON.sun}</button>
       </div>
     </header>
     <div class="toolbar">
@@ -146,6 +137,8 @@ async function updateConfig(ctx) {
     ctx.db.prepare('UPDATE config SET show_completed = ? WHERE id = 1').run(b.show_completed ? 1 : 0);
   if (b.theme === 'light' || b.theme === 'dark')
     ctx.db.prepare('UPDATE config SET theme = ? WHERE id = 1').run(b.theme);
+  if (['left', 'center', 'right', 'fit'].includes(b.container_align))
+    ctx.db.prepare('UPDATE config SET container_align = ? WHERE id = 1').run(b.container_align);
   ctx.json(200, { ok: true });
 }
 

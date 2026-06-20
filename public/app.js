@@ -28,6 +28,17 @@ if (toggleCompleted) {
   });
 }
 
+const toggleAlign = $('#toggle-align');
+if (toggleAlign) {
+  const ORDER = ['left', 'center', 'right', 'fit'];
+  toggleAlign.addEventListener('click', async () => {
+    const cur = toggleAlign.getAttribute('data-align') || 'center';
+    const next = ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length];
+    await postJSON('/config', { container_align: next });
+    location.reload();
+  });
+}
+
 const toggleTheme = $('#toggle-theme');
 if (toggleTheme) {
   toggleTheme.addEventListener('click', async () => {

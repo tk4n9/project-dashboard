@@ -141,7 +141,8 @@ function dashboardView(ctx) {
   const { db } = ctx;
   const settings = ctx.settings();
   return `
-    <h1 class="dash-title">${esc(settings.project_name)}</h1>
+    <input id="project-name" class="project-name dash-title" value="${esc(settings.project_name)}" aria-label="Project name">
+
     <div class="dash-grid">
       ${completionWidget(db)}
       ${dueSoonWidget(db)}

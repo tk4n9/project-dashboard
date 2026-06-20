@@ -98,6 +98,14 @@ test('config update is reflected on the page', async () => {
   assert.match(html, /data-theme="dark"/);
 });
 
+test('container alignment is configurable', async () => {
+  await post('/config', { container_align: 'right' });
+  assert.match(await (await fetch(base + '/')).text(), /class="container align-right"/);
+  // invalid value ignored, falls back to a valid class
+  await post('/config', { container_align: 'bogus' });
+  assert.match(await (await fetch(base + '/')).text(), /class="container align-(left|center|right|fit)"/);
+});
+
 test('delete removes todos', async () => {
   const { id } = await (await post('/todos', { title: 'Delete me' })).json();
   const del = await (await post('/todos/delete', { ids: [id] })).json();
