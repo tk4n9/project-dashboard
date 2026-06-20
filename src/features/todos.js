@@ -83,7 +83,7 @@ function mainView(settings, todos, sessionsByTodo) {
 function detailView(todo, sessions, targetDir) {
   const links = sessions.length ? sessions.map(sessionItem).join('') : '<li class="muted">No sessions yet.</li>';
   return `
-    <p><a href="/" class="back">← Back</a></p>
+    <p><a href="/todos" class="back">← Back</a></p>
     <input id="todo-title" class="detail-title" value="${esc(todo.title)}" aria-label="Todo title">
 
     <section class="card">
@@ -227,9 +227,9 @@ async function startTodoSession(ctx) {
 export default {
   id: 'todos',
   order: 10,
-  nav: { label: 'Todos', href: '/' },
+  nav: { label: 'Todos', href: '/todos' },
   routes: [
-    { method: 'GET', path: '/', handler: home },
+    { method: 'GET', path: '/todos', handler: home },
     { method: 'GET', path: '/todos/:id', handler: detail },
     { method: 'POST', path: '/config', handler: updateConfig },
     { method: 'POST', path: '/todos', handler: addTodo },

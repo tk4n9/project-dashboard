@@ -34,12 +34,21 @@ before(async () => {
 });
 after(() => server.close());
 
-test('home page renders with nav', async () => {
+test('dashboard is the home page', async () => {
   const res = await fetch(base + '/');
   assert.equal(res.status, 200);
   const html = await res.text();
-  assert.match(html, /todo-list/);
+  assert.match(html, /dash-grid/);
   assert.match(html, /class="appnav"/);
+  assert.match(html, />Dashboard</);
+  assert.match(html, />Progress</);
+});
+
+test('todos list lives at /todos', async () => {
+  const res = await fetch(base + '/todos');
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /todo-list/);
   assert.match(html, />Todos</);
 });
 
