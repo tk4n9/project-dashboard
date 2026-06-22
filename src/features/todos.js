@@ -110,13 +110,15 @@ function detailView(todo, sessions, comments, targetDir) {
         <button type="submit">Comment</button>
       </form>
     </section>
-    <section class="card">
-      <h2>Claude sessions</h2>
-      <ul class="sessions">${links}</ul>
-    </section>
-    <section class="card">
-      <h2>Start a session</h2>
-      <form id="start-session" class="start-form">
+    <section class="card claude-group">
+      <h2>Claude</h2>
+      <div class="claude-block">
+        <h3>Sessions</h3>
+        <ul class="sessions">${links}</ul>
+      </div>
+      <div class="claude-block">
+        <h3>Start a session</h3>
+        <form id="start-session" class="start-form">
         <label>Session name <input type="text" name="name" required></label>
         <label>Working directory <input type="text" name="cwd" value="${esc(targetDir)}"></label>
         <label>Prompt (appended after the explanation above)
@@ -127,7 +129,8 @@ function detailView(todo, sessions, comments, targetDir) {
         </div>
         <button type="submit">Start session</button>
         <span id="start-status" class="muted"></span>
-      </form>
+        </form>
+      </div>
     </section>`;
 }
 

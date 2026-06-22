@@ -123,6 +123,11 @@ button:hover { background: var(--fg); color: var(--bg); }
 .back { text-decoration: underline; }
 .error { color: var(--fg); font-weight: 700; border: 1px solid var(--border); padding: 6px 10px; }
 
+/* Claude group (sessions + start-a-session as children) */
+.claude-group { display: grid; gap: 12px; }
+.claude-block { border: 1px solid var(--border); background: var(--bg); padding: 12px; }
+.claude-block h3 { margin: 0 0 8px; font-size: 14px; }
+
 /* Comments / log */
 .comment-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
 .comment { border: 1px solid var(--border); background: var(--bg); padding: 8px 10px; }
