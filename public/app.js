@@ -142,6 +142,27 @@ if (saveExpl && explanation) {
   }
 }
 
+// Comments / log (detail page).
+const addCommentForm = $('#add-comment');
+if (addCommentForm) {
+  const cid = location.pathname.replace(BASE, '').split('/')[2];
+  addCommentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = $('textarea[name="body"]', addCommentForm).value.trim();
+    if (!body) return;
+    await postJSON(`/todos/${cid}/comments`, { body });
+    location.reload();
+  });
+}
+$$('.comment .comment-delete').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const id = Number(btn.closest('.comment').dataset.id);
+    if (!confirm('Delete this comment?')) return;
+    await postJSON(`/comments/${id}/delete`, {});
+    location.reload();
+  });
+});
+
 // Auto-refresh while any session is still resolving its remote URL.
 if ($$('.status').some((s) => /starting/.test(s.textContent))) {
   setTimeout(() => location.reload(), 5000);

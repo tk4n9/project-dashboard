@@ -15,6 +15,8 @@ const allTodos = (db) => db.prepare('SELECT * FROM todos ORDER BY position, id')
 const getTodo = (db, id) => db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
 const todoSessions = (db, id) =>
   db.prepare('SELECT * FROM sessions WHERE todo_id = ? ORDER BY id DESC').all(id);
+const todoComments = (db, id) =>
+  db.prepare('SELECT * FROM comments WHERE todo_id = ? ORDER BY id ASC').all(id);
 
 // ---------- Views ----------
 function dueBadge(due) {
@@ -72,8 +74,17 @@ function mainView(settings, todos, sessionsByTodo) {
     <ul class="todo-list">${rows || '<li class="muted empty">No todos. Add one above.</li>'}</ul>`;
 }
 
-function detailView(todo, sessions, targetDir) {
+function commentItem(c) {
+  return `<li class="comment" data-id="${c.id}">
+    <div class="comment-meta"><span class="muted small">${esc(c.created_at)}</span>
+      <button type="button" class="comment-delete danger" aria-label="Delete comment">✕</button></div>
+    <div class="comment-body">${esc(c.body)}</div>
+  </li>`;
+}
+
+function detailView(todo, sessions, comments, targetDir) {
   const links = sessions.length ? sessions.map(sessionItem).join('') : '<li class="muted">No sessions yet.</li>';
+  const log = comments.length ? comments.map(commentItem).join('') : '<li class="muted">No comments yet.</li>';
   return `
     <p><a href="${u('/todos')}" class="back">← Back</a></p>
     <input id="todo-title" class="detail-title" value="${esc(todo.title)}" aria-label="Todo title">
@@ -90,6 +101,14 @@ function detailView(todo, sessions, targetDir) {
         <button id="save-explanation">Save</button>
         <label class="due-edit">Due: <input type="date" id="due-date" value="${esc(todo.due_date || '')}"></label>
       </div>
+    </section>
+    <section class="card">
+      <h2>Log</h2>
+      <ul class="comment-list">${log}</ul>
+      <form id="add-comment" class="add-comment">
+        <textarea name="body" rows="3" placeholder="Add a status / log comment…" required></textarea>
+        <button type="submit">Comment</button>
+      </form>
     </section>
     <section class="card">
       <h2>Claude sessions</h2>
@@ -126,7 +145,7 @@ function detail(ctx) {
   if (!todo) return ctx.notFound('Todo not found');
   ctx.page({
     title: `${todo.title} — Dashboard`,
-    body: detailView(todo, todoSessions(ctx.db, todo.id), ctx.runtime.target_dir),
+    body: detailView(todo, todoSessions(ctx.db, todo.id), todoComments(ctx.db, todo.id), ctx.runtime.target_dir),
   });
 }
 
@@ -192,6 +211,20 @@ async function saveDue(ctx) {
   ctx.json(200, { ok: true });
 }
 
+async function addComment(ctx) {
+  const b = await ctx.body();
+  const body = (b.body || '').trim();
+  if (!body) return ctx.json(400, { error: 'comment body required' });
+  const info = ctx.db.prepare('INSERT INTO comments (todo_id, body) VALUES (?, ?)')
+    .run(Number(ctx.params.id), body);
+  ctx.json(200, { ok: true, id: info.lastInsertRowid });
+}
+
+function deleteComment(ctx) {
+  ctx.db.prepare('DELETE FROM comments WHERE id = ?').run(Number(ctx.params.id));
+  ctx.json(200, { ok: true });
+}
+
 async function startTodoSession(ctx) {
   const todo = getTodo(ctx.db, Number(ctx.params.id));
   if (!todo) return ctx.json(404, { error: 'todo not found' });
@@ -233,5 +266,7 @@ export default {
     { method: 'POST', path: '/todos/:id/explanation', handler: saveExplanation },
     { method: 'POST', path: '/todos/:id/due', handler: saveDue },
     { method: 'POST', path: '/todos/:id/sessions', handler: startTodoSession },
+    { method: 'POST', path: '/todos/:id/comments', handler: addComment },
+    { method: 'POST', path: '/comments/:id/delete', handler: deleteComment },
   ],
 };

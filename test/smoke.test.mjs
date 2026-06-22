@@ -79,6 +79,16 @@ test('todo title is editable', async () => {
   assert.equal((await post(`/todos/${id}/title`, { title: '  ' })).status, 400);
 });
 
+test('add, render, and delete a comment', async () => {
+  const { id } = await (await post('/todos', { title: 'Has comments' })).json();
+  const add = await (await post(`/todos/${id}/comments`, { body: 'first log entry' })).json();
+  assert.equal(add.ok, true);
+  assert.match(await (await fetch(`${base}/todos/${id}`)).text(), /first log entry/);
+  assert.equal((await post(`/todos/${id}/comments`, { body: '  ' })).status, 400); // empty rejected
+  assert.equal((await post(`/comments/${add.id}/delete`, {})).status, 200);
+  assert.doesNotMatch(await (await fetch(`${base}/todos/${id}`)).text(), /first log entry/);
+});
+
 test('add requires a title', async () => {
   const res = await post('/todos', { title: '   ' });
   assert.equal(res.status, 400);

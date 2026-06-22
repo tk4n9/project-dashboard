@@ -50,6 +50,15 @@ export function initSchema() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_todo ON sessions(todo_id);
+
+    CREATE TABLE IF NOT EXISTS comments (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      todo_id    INTEGER NOT NULL REFERENCES todos(id) ON DELETE CASCADE,
+      body       TEXT    NOT NULL,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_comments_todo ON comments(todo_id);
   `);
 
   // Migration: add columns introduced after the initial schema (existing DBs).
