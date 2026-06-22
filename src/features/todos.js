@@ -78,7 +78,7 @@ function commentItem(c) {
   return `<li class="comment" data-id="${c.id}">
     <div class="comment-meta"><span class="muted small">${esc(c.created_at)}</span>
       <button type="button" class="comment-delete danger" aria-label="Delete comment">✕</button></div>
-    <div class="comment-body">${esc(c.body)}</div>
+    <textarea class="comment-edit" rows="2" aria-label="Edit comment">${esc(c.body)}</textarea>
   </li>`;
 }
 
@@ -223,6 +223,14 @@ async function addComment(ctx) {
   ctx.json(200, { ok: true, id: info.lastInsertRowid });
 }
 
+async function updateComment(ctx) {
+  const b = await ctx.body();
+  const body = (b.body || '').trim();
+  if (!body) return ctx.json(400, { error: 'comment body required' });
+  ctx.db.prepare('UPDATE comments SET body = ? WHERE id = ?').run(body, Number(ctx.params.id));
+  ctx.json(200, { ok: true });
+}
+
 function deleteComment(ctx) {
   ctx.db.prepare('DELETE FROM comments WHERE id = ?').run(Number(ctx.params.id));
   ctx.json(200, { ok: true });
@@ -270,6 +278,7 @@ export default {
     { method: 'POST', path: '/todos/:id/due', handler: saveDue },
     { method: 'POST', path: '/todos/:id/sessions', handler: startTodoSession },
     { method: 'POST', path: '/todos/:id/comments', handler: addComment },
+    { method: 'POST', path: '/comments/:id', handler: updateComment },
     { method: 'POST', path: '/comments/:id/delete', handler: deleteComment },
   ],
 };

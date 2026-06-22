@@ -85,6 +85,10 @@ test('add, render, and delete a comment', async () => {
   assert.equal(add.ok, true);
   assert.match(await (await fetch(`${base}/todos/${id}`)).text(), /first log entry/);
   assert.equal((await post(`/todos/${id}/comments`, { body: '  ' })).status, 400); // empty rejected
+  // edit
+  assert.equal((await post(`/comments/${add.id}`, { body: 'edited entry' })).status, 200);
+  assert.match(await (await fetch(`${base}/todos/${id}`)).text(), /edited entry/);
+  assert.equal((await post(`/comments/${add.id}`, { body: '  ' })).status, 400); // empty edit rejected
   assert.equal((await post(`/comments/${add.id}/delete`, {})).status, 200);
   assert.doesNotMatch(await (await fetch(`${base}/todos/${id}`)).text(), /first log entry/);
 });

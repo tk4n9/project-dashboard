@@ -162,6 +162,13 @@ $$('.comment .comment-delete').forEach((btn) => {
     location.reload();
   });
 });
+$$('.comment .comment-edit').forEach((ta) => {
+  ta.addEventListener('change', () => {
+    const id = Number(ta.closest('.comment').dataset.id);
+    const body = ta.value.trim();
+    if (body) postJSON(`/comments/${id}`, { body });
+  });
+});
 
 // Auto-refresh while any session is still resolving its remote URL.
 if ($$('.status').some((s) => /starting/.test(s.textContent))) {

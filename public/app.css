@@ -132,7 +132,11 @@ button:hover { background: var(--fg); color: var(--bg); }
 .comment-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
 .comment { border: 1px solid var(--border); background: var(--bg); padding: 8px 10px; }
 .comment-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.comment-body { white-space: pre-wrap; word-break: break-word; }
+.comment-edit {
+  width: 100%; resize: vertical; font: inherit; color: var(--fg);
+  background: transparent; border: 1px solid transparent; padding: 4px 6px;
+}
+.comment-edit:hover, .comment-edit:focus { border-color: var(--border); outline: none; background: var(--card); }
 .comment-delete { padding: 0 6px; font-size: 12px; }
 .add-comment { display: grid; gap: 8px; }
 .add-comment textarea { width: 100%; resize: vertical; font: inherit; }
