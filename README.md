@@ -10,7 +10,7 @@ remote-control sessions scoped to each todo.
 
 ## Features
 
-- Todo list: add, complete (with strikethrough), bulk-delete, optional due dates.
+- Todo list: add, complete (with strikethrough), delete, optional due dates.
 - Per-todo detail page with a markdown explanation (Write/Preview) that doubles
   as the boilerplate prompt for Claude sessions.
 - Start Claude Code remote-control sessions per todo (name, working directory,
@@ -25,10 +25,33 @@ remote-control sessions scoped to each todo.
 - A logged-in [`claude`](https://claude.com/claude-code) CLI — for session spawning
 - The web UI works without tmux/claude; only session-spawning needs them.
 
-## Quick start
+## Install with Claude Code (one prompt)
+
+From your **target-project root**, start [Claude Code](https://claude.com/claude-code)
+and paste this prompt. It clones the dashboard beside your project and starts it:
+
+```text
+Set up the "project-dashboard" tool to manage THIS project.
+
+1. Treat the current directory as the target-project. Record its absolute path.
+2. Clone the dashboard as a SIBLING directory (next to this project, NOT inside it):
+   git clone https://github.com/tk4n9/project-dashboard.git ../project-dashboard
+   If ../project-dashboard already exists, run `git pull` in it instead of cloning.
+3. Ask me for a dashboard password, and optionally a port (default 8080) and host
+   (127.0.0.1 = local only, 0.0.0.0 = LAN). Use sensible defaults if I don't care.
+4. From the cloned directory, run the setup script pointed at this project:
+   cd ../project-dashboard && ./setup.sh --target-dir "<absolute path of the target-project>" --password "<password>" [--port N] [--host ADDR]
+5. The script installs deps, initializes the DB, and starts the server.
+   Report the local and LAN URLs it prints.
+
+Host requirements: Node.js >= 18, tmux, and a logged-in `claude` CLI
+(tmux + claude are only needed to launch Claude sessions from the dashboard).
+```
+
+## Quick start (manual)
 
 ```bash
-git clone <this-repo> project-dashboard
+git clone https://github.com/tk4n9/project-dashboard.git
 cd project-dashboard
 ./setup.sh --target-dir ../your-project --password yourpassword
 ```
