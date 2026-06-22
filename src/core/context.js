@@ -2,6 +2,7 @@
 // surface — keep it small and stable so feature modules rarely need core changes.
 import { layout } from './layout.js';
 import { parseBody, send, json, redirect } from './http.js';
+import { config } from '../config.js';
 
 export function makeContext({ req, res, url, params, db, runtime, navItems }) {
   let bodyPromise;
@@ -20,7 +21,7 @@ export function makeContext({ req, res, url, params, db, runtime, navItems }) {
 
     send: (status, body, headers) => send(res, status, body, headers),
     json: (status, obj, headers) => json(res, status, obj, headers),
-    redirect: (location, headers) => redirect(res, location, headers),
+    redirect: (location, headers) => redirect(res, config.base_path + location, headers),
     notFound: (msg = 'Not found') => send(res, 404, msg),
 
     // Render a full HTML page with shared chrome (nav + theme).

@@ -1,7 +1,7 @@
 // Dashboard feature: the project overview / landing page at '/'.
 // Read-only summary widgets that link into the Todos list and detail pages.
 // See .omc/specs/deep-interview-dashboard-tab.md for the spec.
-import { esc } from '../core/layout.js';
+import { esc, u } from '../core/layout.js';
 
 const DUE_SOON_DAYS = 3;
 const RECENT_TODOS = 3;
@@ -42,7 +42,7 @@ function dueSoonWidget(db) {
   ).all(plusDaysStr(DUE_SOON_DAYS));
   const today = todayStr();
   const items = rows.length
-    ? rows.map((t) => `<li><a href="/todos/${t.id}">${esc(t.title)}</a>
+    ? rows.map((t) => `<li><a href="${u(`/todos/${t.id}`)}">${esc(t.title)}</a>
         <span class="due ${t.due_date < today ? 'overdue' : ''}">${esc(t.due_date)}</span></li>`).join('')
     : '<li class="muted">Nothing due in the next ' + DUE_SOON_DAYS + ' days.</li>';
   return `
@@ -55,7 +55,7 @@ function dueSoonWidget(db) {
 function recentTodosWidget(db) {
   const rows = db.prepare('SELECT * FROM todos ORDER BY id DESC LIMIT ?').all(RECENT_TODOS);
   const items = rows.length
-    ? rows.map((t) => `<li><a href="/todos/${t.id}" class="${t.done ? 'done-link' : ''}">${esc(t.title)}</a></li>`).join('')
+    ? rows.map((t) => `<li><a href="${u(`/todos/${t.id}`)}" class="${t.done ? 'done-link' : ''}">${esc(t.title)}</a></li>`).join('')
     : '<li class="muted">No todos yet.</li>';
   return `
     <section class="card widget">
@@ -75,7 +75,7 @@ function recentSessionsWidget(db) {
         ? `<a href="${esc(s.remote_url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`
         : `<span class="muted">${esc(s.name)}</span>`;
       return `<li>${name} <span class="status ${s.remote_url ? 'ok' : ''}">${esc(s.status)}</span>
-        <a class="muted small" href="/todos/${s.todo_id}">${esc(s.todo_title)}</a></li>`;
+        <a class="muted small" href="${u(`/todos/${s.todo_id}`)}">${esc(s.todo_title)}</a></li>`;
     }).join('')
     : '<li class="muted">No sessions yet.</li>';
   return `
@@ -96,7 +96,7 @@ function activityWidget(db) {
     ? rows.map((r) => {
       const verb = r.kind === 'todo' ? 'Todo added' : 'Session started';
       return `<li><span class="muted small">${esc(r.created_at)}</span>
-        ${verb}: <a href="/todos/${r.ref}">${esc(r.label)}</a></li>`;
+        ${verb}: <a href="${u(`/todos/${r.ref}`)}">${esc(r.label)}</a></li>`;
     }).join('')
     : '<li class="muted">No activity yet.</li>';
   return `

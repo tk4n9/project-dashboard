@@ -1,6 +1,6 @@
 // Login feature: password form + cookie issue. Public routes (no auth gate).
 import { checkPassword, authCookieHeader } from '../core/auth.js';
-import { layout, esc } from '../core/layout.js';
+import { layout, esc, u } from '../core/layout.js';
 
 function loginPage(error) {
   return layout({
@@ -10,7 +10,7 @@ function loginPage(error) {
     <section class="card login">
       <h1>Project Dashboard</h1>
       ${error ? `<p class="error">${esc(error)}</p>` : ''}
-      <form method="POST" action="/login">
+      <form method="POST" action="${u('/login')}">
         <input type="password" name="password" placeholder="Password" autofocus required>
         <button type="submit">Sign in</button>
       </form>

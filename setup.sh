@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Project Dashboard setup. Run from inside the project-dashboard directory.
 #
-#   ./setup.sh [--target-dir PATH] [--port N] [--host ADDR] [--password PW]
+#   ./setup.sh [--target-dir PATH] [--port N] [--host ADDR] [--password PW] [--base-path /prefix]
+#
+# --base-path serves the app under a subpath (e.g. /projectdashboard) behind a
+# reverse proxy. Leave empty to serve at the domain root.
 #
 # Defaults: target-dir = sibling guess, port 8080, host 0.0.0.0.
 # Writes config.json, installs deps, initializes the DB, prints the LAN URL,
@@ -15,6 +18,7 @@ TARGET_DIR=""
 PORT="8080"
 HOST="0.0.0.0"
 PASSWORD=""
+BASE_PATH=""
 
 # --- parse args ---
 while [[ $# -gt 0 ]]; do
@@ -23,6 +27,7 @@ while [[ $# -gt 0 ]]; do
     --port)       PORT="$2"; shift 2 ;;
     --host)       HOST="$2"; shift 2 ;;
     --password)   PASSWORD="$2"; shift 2 ;;
+    --base-path)  BASE_PATH="$2"; shift 2 ;;
     -h|--help)
       grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -51,10 +56,10 @@ if [[ -z "$PASSWORD" ]]; then
 fi
 
 # --- write config.json ---
-node - "$TARGET_DIR" "$HOST" "$PORT" "$PASSWORD" "$SECRET" <<'NODE'
+node - "$TARGET_DIR" "$HOST" "$PORT" "$PASSWORD" "$SECRET" "$BASE_PATH" <<'NODE'
 const fs = require('fs');
-const [, , target_dir, host, port, password, secret] = process.argv;
-const cfg = { target_dir, host, port: Number(port), password, secret };
+const [, , target_dir, host, port, password, secret, base_path] = process.argv;
+const cfg = { target_dir, host, port: Number(port), password, secret, base_path };
 fs.writeFileSync('config.json', JSON.stringify(cfg, null, 2) + '\n');
 console.log('Wrote config.json');
 NODE

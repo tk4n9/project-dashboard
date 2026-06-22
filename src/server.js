@@ -11,6 +11,7 @@ import { matchRoute } from './core/router.js';
 import { makeContext } from './core/context.js';
 
 const PUBLIC = join(ROOT, 'public');
+const BASE = config.base_path;          // '' or '/prefix'
 
 export async function createServer() {
   initSchema();
@@ -21,7 +22,12 @@ export async function createServer() {
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const path = url.pathname;
+      let path = url.pathname;
+      if (BASE) {
+        if (path === BASE || path === `${BASE}/`) path = '/';
+        else if (path.startsWith(`${BASE}/`)) path = path.slice(BASE.length);
+        else return send(res, 404, 'Not found');
+      }
 
       if (path.startsWith('/static/')) {
         return serveStatic(res, PUBLIC, path.replace(/^\/static\//, ''));
@@ -32,7 +38,7 @@ export async function createServer() {
 
       if (!match.route.public && !isAuthed(req)) {
         if (req.method === 'GET') {
-          res.writeHead(302, { Location: '/login' });
+          res.writeHead(302, { Location: `${BASE}/login` });
           return res.end();
         }
         return json(res, 401, { error: 'unauthorized' });

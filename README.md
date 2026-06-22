@@ -78,6 +78,27 @@ the chosen working directory, then scrapes the remote-control link
 > scraped from stdout. If a future Claude version changes the format, update
 > `REMOTE_URL_RE` in `src/sessions.js`.
 
+## Serve under a subpath (reverse proxy)
+
+Serve the app at `https://your-host/projectdashboard` instead of a port. The app
+prefixes every URL it emits (links, static files, API calls, redirects), so it
+works behind a path-based reverse proxy.
+
+1. Start with a base path (bind to localhost when proxying):
+   ```bash
+   ./setup.sh --target-dir ../your-project --password pw --host 127.0.0.1 --port 6531 --base-path /projectdashboard
+   ```
+2. Proxy the prefix **without stripping it** (Apache example — match your port):
+   ```apache
+   ProxyPreserveHost On
+   ProxyPass        /projectdashboard http://127.0.0.1:6531/projectdashboard
+   ProxyPassReverse /projectdashboard http://127.0.0.1:6531/projectdashboard
+   ```
+   Enable + reload: `sudo a2enmod proxy proxy_http && sudo systemctl reload apache2`
+
+Serving via the proxy on port 80/443 also avoids opening a high port in the
+firewall (often blocked inbound on managed networks).
+
 ## Security
 
 - Designed for trusted LAN / localhost use. It spawns processes and runs Claude on

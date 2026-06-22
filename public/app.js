@@ -2,8 +2,9 @@
 // the server-rendered DOM as the single source of truth.
 'use strict';
 
+const BASE = document.body.dataset.base || ''; // subpath prefix, if any
 function postJSON(url, body) {
-  return fetch(url, {
+  return fetch(BASE + url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
@@ -92,7 +93,7 @@ $$('.todo .toggle').forEach((cb) => {
 const explanation = $('#explanation');
 const saveExpl = $('#save-explanation');
 if (saveExpl && explanation) {
-  const todoId = location.pathname.split('/')[2];
+  const todoId = location.pathname.replace(BASE, '').split('/')[2];
 
   const titleInput = $('#todo-title');
   if (titleInput) {

@@ -2,6 +2,10 @@
 // and call ctx.page({title, body}); this wraps it with <head>, theme, and nav.
 
 import { ICON, ALIGN_ICON } from './icons.js';
+import { config } from '../config.js';
+
+// Prefix an internal path with the configured base_path (subpath hosting).
+export const u = (p) => config.base_path + p;
 
 export function esc(s) {
   return String(s ?? '')
@@ -15,8 +19,8 @@ export function esc(s) {
 function renderNav(navItems, activePath, theme, align) {
   const links = navItems
     .map((n) => {
-      const active = n.href === activePath || (n.href !== '/' && activePath.startsWith(n.href));
-      return `<a href="${esc(n.href)}" class="${active ? 'active' : ''}">${esc(n.label)}</a>`;
+      const active = u(n.href) === activePath || (n.href !== '/' && activePath.startsWith(u(n.href)));
+      return `<a href="${esc(u(n.href))}" class="${active ? 'active' : ''}">${esc(n.label)}</a>`;
     })
     .join('');
   // Global config controls (alignment + theme) live in the nav so they appear on every page.
@@ -48,12 +52,12 @@ export function layout({ title, body, theme = 'light', navItems = [], activePath
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(title)}</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="${u('/static/app.css')}">
 </head>
-<body>
+<body data-base="${esc(config.base_path)}">
   ${bare ? '' : renderNav(navItems, activePath, theme, alignClass)}
   <main class="container align-${alignClass}">${body}</main>
-  <script src="/static/app.js"></script>
+  <script src="${u('/static/app.js')}"></script>
 </body>
 </html>`;
 }

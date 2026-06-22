@@ -3,7 +3,7 @@
 //
 // This is the reference example for how a feature is built: views are plain
 // functions returning HTML strings; handlers read ctx and call ctx.page/ctx.json.
-import { esc } from '../core/layout.js';
+import { esc, u } from '../core/layout.js';
 import { ICON } from '../core/icons.js';
 import { startSession, killSession, tmuxAvailable } from '../sessions.js';
 
@@ -38,7 +38,7 @@ function todoRow(t, sessions) {
   <li class="todo ${t.done ? 'done' : ''}" data-id="${t.id}">
     <div class="todo-main">
       <input type="checkbox" class="toggle" ${t.done ? 'checked' : ''} aria-label="Mark done">
-      <a class="title" href="/todos/${t.id}">${esc(t.title)}</a>
+      <a class="title" href="${u(`/todos/${t.id}`)}">${esc(t.title)}</a>
       ${dueBadge(t.due_date)}
       <button type="button" class="expand-btn" aria-expanded="false" aria-label="Show sessions">▾</button>
       <button type="button" class="todo-delete danger" aria-label="Delete todo">✕</button>
@@ -75,7 +75,7 @@ function mainView(settings, todos, sessionsByTodo) {
 function detailView(todo, sessions, targetDir) {
   const links = sessions.length ? sessions.map(sessionItem).join('') : '<li class="muted">No sessions yet.</li>';
   return `
-    <p><a href="/todos" class="back">← Back</a></p>
+    <p><a href="${u('/todos')}" class="back">← Back</a></p>
     <input id="todo-title" class="detail-title" value="${esc(todo.title)}" aria-label="Todo title">
 
     <section class="card">

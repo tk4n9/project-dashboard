@@ -14,6 +14,7 @@ const defaults = {
   port: 8080,
   password: '',       // empty = auth disabled (warn)
   secret: 'dev-insecure-secret-change-me',
+  base_path: '',      // e.g. '/projectdashboard' when served under a subpath
 };
 
 let fileConfig = {};
@@ -26,4 +27,10 @@ if (existsSync(CONFIG_PATH)) {
 }
 
 export const config = { ...defaults, ...fileConfig };
+
+// Normalize base_path to '' or '/prefix' (leading slash, no trailing slash).
+let bp = String(config.base_path || '').trim();
+if (bp && !bp.startsWith('/')) bp = `/${bp}`;
+config.base_path = bp.replace(/\/+$/, '');
+
 export { ROOT };
