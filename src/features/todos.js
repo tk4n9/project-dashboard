@@ -41,6 +41,7 @@ function todoRow(t, sessions) {
       <a class="title" href="/todos/${t.id}">${esc(t.title)}</a>
       ${dueBadge(t.due_date)}
       <button type="button" class="expand-btn" aria-expanded="false" aria-label="Show sessions">▾</button>
+      <button type="button" class="todo-delete danger" aria-label="Delete todo">✕</button>
     </div>
     <div class="todo-sessions" hidden>
       <div class="sessions-box">

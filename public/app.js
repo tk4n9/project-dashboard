@@ -71,6 +71,15 @@ $$('.todo .expand-btn').forEach((btn) => {
   });
 });
 
+$$('.todo .todo-delete').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const id = Number(btn.closest('.todo').dataset.id);
+    if (!confirm('Delete this todo? This also kills its Claude sessions.')) return;
+    await postJSON('/todos/delete', { ids: [id] });
+    location.reload();
+  });
+});
+
 $$('.todo .toggle').forEach((cb) => {
   cb.addEventListener('change', async () => {
     const id = Number(cb.closest('.todo').dataset.id);
