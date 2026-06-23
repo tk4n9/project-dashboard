@@ -134,4 +134,15 @@ test('session endpoint records a session (spawn disabled)', async () => {
   const out = await res.json();
   assert.equal(out.ok, true);
   assert.equal(out.status, 'starting');
+  // delete/close the session entry
+  assert.equal((await post(`/sessions/${out.id}/delete`, {})).status, 200);
+});
+
+test('add an existing session by remote URL', async () => {
+  const { id } = await (await post('/todos', { title: 'Existing session host' })).json();
+  const res = await post(`/todos/${id}/sessions/existing`, { name: 'pasted', remote_url: 'https://claude.ai/code?environment=env_abc123' });
+  assert.equal(res.status, 200);
+  const html = await (await fetch(`${base}/todos/${id}`)).text();
+  assert.match(html, /env_abc123/);
+  assert.equal((await post(`/todos/${id}/sessions/existing`, { name: 'x' })).status, 400); // url required
 });

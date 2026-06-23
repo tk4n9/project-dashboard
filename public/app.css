@@ -18,6 +18,7 @@
 }
 
 * { box-sizing: border-box; border-radius: 0 !important; }
+[hidden] { display: none !important; }   /* beat display:grid/flex on hidden panels */
 body {
   margin: 0;
   font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -96,6 +97,8 @@ button:hover { background: var(--fg); color: var(--bg); }
 .todo-sessions { padding: 0 12px 12px; }
 .sessions-box { border: 1px solid var(--border); background: var(--bg); padding: 10px 12px; }
 .sessions { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.session { display: flex; align-items: center; gap: 8px; }
+.session-delete { margin-left: auto; flex: 0 0 auto; padding: 0 6px; font-size: 12px; }
 .muted, .empty { color: var(--muted); }
 
 /* Badges */
@@ -127,6 +130,9 @@ button:hover { background: var(--fg); color: var(--bg); }
 .claude-group { display: grid; gap: 12px; }
 .claude-block { border: 1px solid var(--border); background: var(--bg); padding: 12px; }
 .claude-block h3 { margin: 0 0 8px; font-size: 14px; }
+.start-tabs { display: flex; gap: 0; margin-bottom: 10px; }
+.start-tabs .stab { border: 1px solid var(--border); border-bottom: none; font-weight: 600; }
+.start-tabs .stab.active { background: var(--fg); color: var(--bg); }
 
 /* Comments / log */
 .comment-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }

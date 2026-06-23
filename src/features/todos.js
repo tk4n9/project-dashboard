@@ -27,9 +27,11 @@ function dueBadge(due) {
 
 function sessionItem(s) {
   const status = `<span class="status ${s.remote_url ? 'ok' : ''}">${esc(s.status)}</span>`;
-  return s.remote_url
-    ? `<li><a href="${esc(s.remote_url)}" target="_blank" rel="noopener">${esc(s.name)}</a> ${status}</li>`
-    : `<li><span class="muted">${esc(s.name)}</span> ${status}</li>`;
+  const label = s.remote_url
+    ? `<a href="${esc(s.remote_url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`
+    : `<span class="muted">${esc(s.name)}</span>`;
+  return `<li class="session" data-id="${s.id}">${label} ${status}
+    <button type="button" class="session-delete danger" aria-label="Delete/close session" title="Close session and remove">✕</button></li>`;
 }
 
 function todoRow(t, sessions) {
@@ -117,8 +119,11 @@ function detailView(todo, sessions, comments, targetDir) {
         <ul class="sessions">${links}</ul>
       </div>
       <div class="claude-block">
-        <h3>Start a session</h3>
-        <form id="start-session" class="start-form">
+        <div class="start-tabs">
+          <button type="button" class="stab active" data-stab="start">Start a session</button>
+          <button type="button" class="stab" data-stab="existing">Add an existing session</button>
+        </div>
+        <form id="start-session" class="start-form" data-panel="start">
         <label>Session name <input type="text" name="name" required></label>
         <label>Working directory <input type="text" name="cwd" value="${esc(targetDir)}"></label>
         <label>Prompt (appended after the explanation above)
@@ -129,6 +134,12 @@ function detailView(todo, sessions, comments, targetDir) {
         </div>
         <button type="submit">Start session</button>
         <span id="start-status" class="muted"></span>
+        </form>
+        <form id="add-existing" class="start-form" data-panel="existing" hidden>
+          <label>Session name <input type="text" name="name" required></label>
+          <label>Remote URL <input type="text" name="remote_url" placeholder="https://claude.ai/code?environment=env_..." required></label>
+          <button type="submit">Add session</button>
+          <span id="existing-status" class="muted"></span>
         </form>
       </div>
     </section>`;
@@ -236,6 +247,27 @@ function deleteComment(ctx) {
   ctx.json(200, { ok: true });
 }
 
+async function addExistingSession(ctx) {
+  const todo = getTodo(ctx.db, Number(ctx.params.id));
+  if (!todo) return ctx.json(404, { error: 'todo not found' });
+  const b = await ctx.body();
+  const name = (b.name || '').trim() || 'session';
+  const url = (b.remote_url || '').trim();
+  if (!url) return ctx.json(400, { error: 'remote_url required' });
+  const info = ctx.db.prepare(
+    "INSERT INTO sessions (todo_id, name, remote_url, status) VALUES (?, ?, ?, 'added')",
+  ).run(todo.id, name, url);
+  ctx.json(200, { ok: true, id: info.lastInsertRowid });
+}
+
+function deleteSession(ctx) {
+  const id = Number(ctx.params.id);
+  const s = ctx.db.prepare('SELECT tmux_name FROM sessions WHERE id = ?').get(id);
+  if (s) killSession(s.tmux_name);              // kill the tmux session (exact name; no-op if already gone)
+  ctx.db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
+  ctx.json(200, { ok: true });
+}
+
 async function startTodoSession(ctx) {
   const todo = getTodo(ctx.db, Number(ctx.params.id));
   if (!todo) return ctx.json(404, { error: 'todo not found' });
@@ -277,6 +309,8 @@ export default {
     { method: 'POST', path: '/todos/:id/explanation', handler: saveExplanation },
     { method: 'POST', path: '/todos/:id/due', handler: saveDue },
     { method: 'POST', path: '/todos/:id/sessions', handler: startTodoSession },
+    { method: 'POST', path: '/todos/:id/sessions/existing', handler: addExistingSession },
+    { method: 'POST', path: '/sessions/:id/delete', handler: deleteSession },
     { method: 'POST', path: '/todos/:id/comments', handler: addComment },
     { method: 'POST', path: '/comments/:id', handler: updateComment },
     { method: 'POST', path: '/comments/:id/delete', handler: deleteComment },

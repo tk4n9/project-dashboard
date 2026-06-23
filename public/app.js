@@ -140,6 +140,29 @@ if (saveExpl && explanation) {
       location.reload();
     });
   }
+
+  // Start-a-session / Add-an-existing-session tabs.
+  $$('.start-tabs .stab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      $$('.start-tabs .stab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      const sel = tab.dataset.stab;
+      $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== sel; });
+    });
+  });
+
+  const existingForm = $('#add-existing');
+  if (existingForm) {
+    existingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(existingForm).entries());
+      $('#existing-status').textContent = 'Adding…';
+      const res = await postJSON(`/todos/${todoId}/sessions/existing`, data);
+      const out = await res.json();
+      if (!res.ok) { $('#existing-status').textContent = out.error || 'Error'; return; }
+      location.reload();
+    });
+  }
 }
 
 // Comments / log (detail page).
@@ -167,6 +190,16 @@ $$('.comment .comment-edit').forEach((ta) => {
     const id = Number(ta.closest('.comment').dataset.id);
     const body = ta.value.trim();
     if (body) postJSON(`/comments/${id}`, { body });
+  });
+});
+
+// Close/delete a Claude session (kills its tmux session and removes the entry).
+$$('.session .session-delete').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const id = Number(btn.closest('.session').dataset.id);
+    if (!confirm('Close this session and remove it? (kills the tmux session if still running)')) return;
+    await postJSON(`/sessions/${id}/delete`, {});
+    location.reload();
   });
 });
 
